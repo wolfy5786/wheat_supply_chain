@@ -3,7 +3,7 @@ import os
 from dotenv import load_dotenv
 import common_ingestion
 
-
+#USDA dataset comprises of Wheat Export data from Unitedt States to various Partner Countries
 def load_esr_data(base_url = "https://api.fas.usda.gov"):
     commodiy_code = 107     #       'All Wheat' refer notebooks for exploring APIs, measured in metric Tons
     load_dotenv(dotenv_path=".env")
@@ -11,6 +11,7 @@ def load_esr_data(base_url = "https://api.fas.usda.gov"):
     headers = {
     "X-Api-Key" : USDA_PSD_API_KEY
     }
+    #first we fetch the partner Countries
     query = "/api/esr/countries"
     url = base_url + query
     country_data = common_ingestion.fetch_data(url=url, headers= headers)
@@ -58,5 +59,26 @@ def load_esr_data(base_url = "https://api.fas.usda.gov"):
             index=False
         )
 
+#the Gats Dataset comprises of Import, Export & Ree\Export Data of various commodities
+def load_GATS_data(base_url = "https://api.fas.usda.gov"):
+    load_dotenv(dotenv_path=".env")
+    USDA_PSD_API_KEY = os.getenv("USDA_PSD_API_KEY")
+    header = {
+    "X-Api-Key" : USDA_PSD_API_KEY
+    }
 
-load_esr_data()
+    #hs10 Commodities
+    query = "/api/gats/commodities"
+    url = base_url + query
+    df = common_ingestion.fetch_data(url=url, headers=header)
+    #the df contain various commodities we must filter out wheat
+    #many wheat commodities start with 1001 refer API explorations
+    wheat_df = df[df["hS10Code"].astype(str).str.startswith("1001")]
+
+    query = "/api/gats/unitsOfMeasure"
+    url = base_url + query
+    unit_of_measure = common_ingestion.fetch_data(url=url, headers=header)
+    unit_of_measure = pd.DataFrame(unit_of_measure)
+
+    #for import, export and re-export, we need to to call the for each country! 
+     
